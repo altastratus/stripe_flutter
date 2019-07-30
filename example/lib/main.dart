@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:stripe_flutter/stripe_flutter.dart';
 import 'package:http/http.dart';
+import 'package:stripe_flutter/stripe_flutter.dart';
 
 void main() => runApp(MyApp());
 
