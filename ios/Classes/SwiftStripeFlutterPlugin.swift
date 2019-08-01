@@ -7,7 +7,7 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     static var flutterChannel: FlutterMethodChannel!
     static var customerContext: STPCustomerContext?
     
-    static var delegateHandler: STPPaymentMethodsViewControllerDelegate!
+    static var delegateHandler: PaymentMethodsViewControllerDelegate!
     
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "stripe_flutter", binaryMessenger: registrar.messenger())
@@ -73,16 +73,37 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
                                 details: nil))
             return
         }
-        let vc = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(),
-                                                 theme: STPTheme.default(),
-                                                 customerContext: _context,
-                                                 delegate: SwiftStripeFlutterPlugin.delegateHandler)
+        if let uiAppDelegate = UIApplication.shared.delegate,
+            let tempWindow = uiAppDelegate.window,
+            let window = tempWindow,
+            let rootVc = window.rootViewController {
+            
+            SwiftStripeFlutterPlugin.delegateHandler.window = window
+            SwiftStripeFlutterPlugin.delegateHandler.flutterViewController = rootVc
+            
+            let vc = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(),
+                                                     theme: STPTheme.default(),
+                                                     customerContext: _context,
+                                                     delegate: SwiftStripeFlutterPlugin.delegateHandler)
+            
+            let uiNavController = UINavigationController(rootViewController: vc)
+            
+            UIView.transition(with: window, duration: 0.2, options: .transitionCrossDissolve, animations: {
+                window.rootViewController = uiNavController
+            }, completion: nil)
+            
+            window.rootViewController = uiNavController
+
+            result(nil)
         
-        let rootController = UINavigationController(rootViewController: vc)
-        let window: UIWindow = ((UIApplication.shared.delegate?.window)!)!
-        window.rootViewController = rootController
-        
-        result(nil)
+            return
+        } else {
+            result(FlutterError(code: "IllegalStateError",
+                                message: "Root ViewController in Window is currently not available.",
+                                details: nil))
+            
+            return
+        }
     }
 }
 
@@ -105,17 +126,16 @@ class FlutterEphemeralKeyProvider : NSObject, STPEphemeralKeyProvider {
                 return
             }
             
-            let encoder = JSONEncoder()
-            encoder.keyEncodingStrategy = .convertToSnakeCase
-            
-            guard let data = try? encoder.encode(_json) else {
+            guard let data = _json.data(using: .utf8) else {
                 completion(nil, InternalStripeError())
                 return
             }
+            
             guard let dictionary = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: AnyObject] else {
                 completion(nil, InternalStripeError())
                 return
             }
+            
             guard let _dict = dictionary else {
                 completion(nil, InternalStripeError())
                 return
@@ -128,22 +148,41 @@ class FlutterEphemeralKeyProvider : NSObject, STPEphemeralKeyProvider {
 
 class PaymentMethodsViewControllerDelegate: NSObject,  STPPaymentMethodsViewControllerDelegate {
     
-    var flutterChannel: FlutterMethodChannel
+    private let flutterChannel: FlutterMethodChannel
+    
+    var flutterViewController: UIViewController?
+    var window: UIWindow?
     
     init(flutterChannel: FlutterMethodChannel) {
         self.flutterChannel = flutterChannel
     }
     
     func paymentMethodsViewController(_ paymentMethodsViewController: STPPaymentMethodsViewController, didFailToLoadWithError error: Error) {
-        
+        closeWindow()
+        cleanInstance()
     }
     
     func paymentMethodsViewControllerDidFinish(_ paymentMethodsViewController: STPPaymentMethodsViewController) {
-        
+        closeWindow()
+        cleanInstance()
     }
     
     func paymentMethodsViewControllerDidCancel(_ paymentMethodsViewController: STPPaymentMethodsViewController) {
-        
+        closeWindow()
+        cleanInstance()
+    }
+    
+    private func closeWindow() {
+        if let _window = window, let vc = flutterViewController {
+            UIView.transition(with: _window, duration: 0.2, options: .transitionCrossDissolve, animations: {
+                _window.rootViewController = vc
+            }, completion: nil)
+        }
+    }
+    
+    private func cleanInstance() {
+        flutterViewController = nil
+        window = nil
     }
     
 }

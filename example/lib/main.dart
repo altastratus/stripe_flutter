@@ -50,7 +50,8 @@ class MyEphemeralKeyProvider extends EphemeralKeyProvider {
     final params = Map<String, String>();
     params["api_version"] = apiVersion;
     final response = await post("https://sample-stripe-api.herokuapp.com/ephemeral_keys", body: params);
-    return response.body;
+    final body = response.body;
+    return body;
   }
 
 }
