@@ -15,7 +15,7 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     let instance = SwiftStripeFlutterPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
     
-    self.delegateHandler = PaymentMethodsViewControllerDelegate(flutterChannel: self.flutterChannel)
+    self.delegateHandler = PaymentMethodsViewControllerDelegate()
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -80,6 +80,7 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
             
             SwiftStripeFlutterPlugin.delegateHandler.window = window
             SwiftStripeFlutterPlugin.delegateHandler.flutterViewController = rootVc
+            SwiftStripeFlutterPlugin.delegateHandler.setFlutterResult(result)
             
             let vc = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(),
                                                      theme: STPTheme.default(),
@@ -93,9 +94,6 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
             }, completion: nil)
             
             window.rootViewController = uiNavController
-
-            result(nil)
-        
             return
         } else {
             result(FlutterError(code: "IllegalStateError",
@@ -148,21 +146,46 @@ class FlutterEphemeralKeyProvider : NSObject, STPEphemeralKeyProvider {
 
 class PaymentMethodsViewControllerDelegate: NSObject,  STPPaymentMethodsViewControllerDelegate {
     
-    private let flutterChannel: FlutterMethodChannel
+    private var currentPaymentMethod: STPPaymentMethod? = nil
+    private var flutterResult: FlutterResult? = nil
+    private var tuppleResult = [String:Any?]()
     
     var flutterViewController: UIViewController?
     var window: UIWindow?
     
-    init(flutterChannel: FlutterMethodChannel) {
-        self.flutterChannel = flutterChannel
+    func setFlutterResult(_ result: @escaping FlutterResult) {
+        self.flutterResult = result
+    }
+    
+    func paymentMethodsViewController(_ paymentMethodsViewController: STPPaymentMethodsViewController, didSelect paymentMethod: STPPaymentMethod) {
+        print("didSelectPaymentMethod")
+        currentPaymentMethod = paymentMethod
+        
+        if let source = paymentMethod as? STPSource {
+            print("paymentMethod as STPSource")
+            tuppleResult["id"] = source.stripeID
+            tuppleResult["last4"] = source.cardDetails?.last4
+            tuppleResult["brand"] = STPCard.string(from: source.cardDetails?.brand ?? STPCardBrand.unknown)
+            tuppleResult["expiredYear"] = Int(source.cardDetails?.expYear ?? 0)
+            tuppleResult["expiredMonth"] = Int(source.cardDetails?.expMonth ?? 0)
+        } else if let card = paymentMethod as? STPCard {
+            print("paymentMethod as STPCard")
+            tuppleResult["id"] = card.stripeID
+            tuppleResult["last4"] = card.last4
+            tuppleResult["brand"] = STPCard.string(from: card.brand)
+            tuppleResult["expiredYear"] = Int(card.expYear)
+            tuppleResult["expiredMonth"] = Int(card.expMonth)
+        }
     }
     
     func paymentMethodsViewController(_ paymentMethodsViewController: STPPaymentMethodsViewController, didFailToLoadWithError error: Error) {
         closeWindow()
         cleanInstance()
     }
-    
+
     func paymentMethodsViewControllerDidFinish(_ paymentMethodsViewController: STPPaymentMethodsViewController) {
+        print(tuppleResult)
+        self.flutterResult?(tuppleResult)
         closeWindow()
         cleanInstance()
     }
