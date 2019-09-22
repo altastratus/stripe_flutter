@@ -55,8 +55,12 @@ class StripeFlutter {
         raw["id"],
         raw["last4"],
         raw["brand"],
-        raw["expiredYear"],
-        raw["expiredMonth"],
+        raw["expiredYear"] is String
+            ? int.tryParse(raw["expiredYear"]) ?? 0
+            : raw["expiredYear"],
+        raw["expiredMonth"] is String
+            ? int.tryParse(raw["expiredMonth"]) ?? 0
+            : raw["expiredMonth"],
       );
 
   static Future<dynamic> _methodCallHandler(MethodCall methodCall) async {
