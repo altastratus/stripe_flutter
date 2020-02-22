@@ -33,6 +33,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.stripe:stripe-android:8.7.0'
+        implementation 'com.stripe:stripe-android:14.0.0'
     }
 }

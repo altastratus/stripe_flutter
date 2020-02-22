@@ -1,18 +1,20 @@
 package ventures.clade.stripe_flutter;
 
 import androidx.annotation.NonNull;
+
 import com.stripe.android.EphemeralKeyProvider;
 import com.stripe.android.EphemeralKeyUpdateListener;
-import io.flutter.plugin.common.MethodChannel;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import io.flutter.plugin.common.MethodChannel;
 
 public final class FlutterEphemeralKeyProvider implements EphemeralKeyProvider {
 
   private final MethodChannel methodChannel;
 
-  public FlutterEphemeralKeyProvider(MethodChannel methodChannel) {
+  FlutterEphemeralKeyProvider(MethodChannel methodChannel) {
     this.methodChannel = methodChannel;
   }
 

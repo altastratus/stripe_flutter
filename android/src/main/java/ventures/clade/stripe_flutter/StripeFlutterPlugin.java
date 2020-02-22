@@ -9,16 +9,9 @@ import androidx.annotation.Nullable;
 import com.stripe.android.CustomerSession;
 import com.stripe.android.PaymentConfiguration;
 import com.stripe.android.StripeError;
-import com.stripe.android.model.Card;
 import com.stripe.android.model.Customer;
-import com.stripe.android.model.Source;
-import com.stripe.android.model.SourceCardData;
-import com.stripe.android.model.StripeSourceTypeModel;
-import com.stripe.android.view.PaymentMethodsActivity;
+import com.stripe.android.model.PaymentMethod;
 import com.stripe.android.view.PaymentMethodsActivityStarter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,8 +37,6 @@ public class StripeFlutterPlugin implements MethodCallHandler {
 
     private static Result flutterResult;
 
-    private static final int STRIPE_PAYMENT_METHODS_REQUEST_ID = 911;
-
     public static void registerWith(Registrar registrar) {
         final MethodChannel channel = new MethodChannel(registrar.messenger(), "stripe_flutter");
         channel.setMethodCallHandler(new StripeFlutterPlugin());
@@ -56,7 +47,7 @@ public class StripeFlutterPlugin implements MethodCallHandler {
         registrar.addActivityResultListener(new PluginRegistry.ActivityResultListener() {
             @Override
             public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-                if (requestCode == STRIPE_PAYMENT_METHODS_REQUEST_ID && resultCode == Activity.RESULT_OK) {
+                if (requestCode == PaymentMethodsActivityStarter.REQUEST_CODE && resultCode == Activity.RESULT_OK) {
                     handleStripeResult(data);
                 }
                 return true;
@@ -65,41 +56,30 @@ public class StripeFlutterPlugin implements MethodCallHandler {
     }
 
     private static void handleStripeResult(Intent data) {
-        String selectedSource = data.getStringExtra(PaymentMethodsActivity.EXTRA_SELECTED_PAYMENT);
-        try {
-            JSONObject jsonSource = new JSONObject(selectedSource);
-            Card card = Card.fromJson(jsonSource);
-            Source source = Source.fromJson(jsonSource);
-            if (flutterResult != null) {
-                Map<String, Object> cardSource = new HashMap<>();
-                if (card != null) {
-                    cardSource.put("id", card.getId() != null ? card.getId() : "");
-                    cardSource.put("last4", card.getLast4() != null ? card.getLast4() : "");
-                    cardSource.put("brand", card.getBrand() != null ? card.getBrand() : "");
-                    cardSource.put("expiredYear", card.getExpYear() != null ? card.getId() : 0);
-                    cardSource.put("expiredMonth", card.getExpMonth() != null ? card.getId() : 0);
-                } else if (source != null) {
-                    StripeSourceTypeModel sourceTypeModel = source.getSourceTypeModel();
-                    if (sourceTypeModel instanceof SourceCardData) {
-                        SourceCardData sourceCardData = (SourceCardData) sourceTypeModel;
-                        cardSource.put("id", source.getId() != null ? source.getId() : "");
-                        cardSource.put("last4", sourceCardData.getLast4() != null ? sourceCardData.getLast4() : "");
-                        cardSource.put("brand", sourceCardData.getBrand() != null ? sourceCardData.getBrand() : "");
-                        cardSource.put("expiredYear", sourceCardData.getExpiryYear() != null ? sourceCardData.getExpiryYear() : 0);
-                        cardSource.put("expiredMonth", sourceCardData.getExpiryMonth() != null ? sourceCardData.getExpiryMonth() : 0);
-                    } else {
-                        flutterResult.error("RuntimeError", "Unknown SourceTypeModel", null);
-                        return;
-                    }
-                } else {
-                    flutterResult.error("RuntimeError", "Unknown result from stripe activity", null);
-                    return;
-                }
-                flutterResult.success(cardSource);
+        PaymentMethodsActivityStarter.Result result = PaymentMethodsActivityStarter.Result.fromIntent(data);
+        if (result == null) {
+            flutterResult.error("RuntimeError", "Unknown result from stripe activity", null);
+            return;
+        }
+        @Nullable PaymentMethod paymentMethod = result.component1();
+        if (paymentMethod == null) {
+            flutterResult.error("RuntimeError", "Unknown result from stripe activity", null);
+            return;
+        }
+        PaymentMethod.Card card = paymentMethod.card;
+        if (flutterResult != null) {
+            Map<String, Object> cardSource = new HashMap<>();
+            if (card != null) {
+                cardSource.put("id", paymentMethod.id != null ? paymentMethod.id : "");
+                cardSource.put("last4", card.last4 != null ? card.last4 : "");
+                cardSource.put("brand", card.brand != null ? card.brand : "");
+                cardSource.put("expiredYear", card.expiryYear != null ? card.expiryYear : 0);
+                cardSource.put("expiredMonth", card.expiryMonth != null ? card.expiryMonth : 0);
+            } else {
+                flutterResult.error("RuntimeError", "Unknown result from stripe activity", null);
+                return;
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            flutterResult.error("RuntimeError", "Error when parsing selected payment json", null);
+            flutterResult.success(cardSource);
         }
     }
 
@@ -136,11 +116,11 @@ public class StripeFlutterPlugin implements MethodCallHandler {
     }
 
     private void configurePaymentConfiguration(String publishableKey) {
-        PaymentConfiguration.init(publishableKey);
+        PaymentConfiguration.init(registrar.activity(), publishableKey);
     }
 
     private void initCustomerSession(Result result) {
-        CustomerSession.initCustomerSession(new FlutterEphemeralKeyProvider(StripeFlutterPlugin.channel));
+        CustomerSession.initCustomerSession(registrar.activity(), new FlutterEphemeralKeyProvider(StripeFlutterPlugin.channel));
         result.success(null);
     }
 
@@ -161,7 +141,8 @@ public class StripeFlutterPlugin implements MethodCallHandler {
             @Override
             public void onCustomerRetrieved(@NonNull Customer customer) {
                 Log.d("StripeFlutterPlugin", "onCustomerRetrieved");
-                new PaymentMethodsActivityStarter(StripeFlutterPlugin.registrar.activity()).startForResult(STRIPE_PAYMENT_METHODS_REQUEST_ID);
+                PaymentMethodsActivityStarter.Args args = new PaymentMethodsActivityStarter.Args.Builder().build();
+                new PaymentMethodsActivityStarter(StripeFlutterPlugin.registrar.activity()).startForResult(args);
             }
 
             @Override

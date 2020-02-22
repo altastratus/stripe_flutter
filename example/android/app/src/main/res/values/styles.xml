@@ -6,13 +6,4 @@
              Flutter draws its first frame -->
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
-
-    <!-- Change stripe activity colors -->
-    <style name="StripeDefaultTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">#F44336</item>
-        <item name="colorAccent">#FF9800</item>
-        <item name="colorControlNormal">#CDDC39</item>
-        <item name="titleTextColor">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/secondary_text_light</item>
-    </style>
 </resources>
