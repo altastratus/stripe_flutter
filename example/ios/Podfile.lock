@@ -1,16 +1,16 @@
 PODS:
   - Flutter (1.0.0)
-  - Stripe (14.0.0)
+  - Stripe (17.0.3)
   - stripe_flutter (0.0.1):
     - Flutter
-    - Stripe (= 14.0.0)
+    - Stripe (= 17.0.3)
 
 DEPENDENCIES:
   - Flutter (from `.symlinks/flutter/ios`)
   - stripe_flutter (from `.symlinks/plugins/stripe_flutter/ios`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  trunk:
     - Stripe
 
 EXTERNAL SOURCES:
@@ -21,9 +21,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  Stripe: db29ad197c74aca6fb981e4e8355cf7ebd0fca5a
-  stripe_flutter: 2bc7feac3d96092119bccc99ca74efa1ca99a6c1
+  Stripe: 30ba9a2ac7297e93de561fed695222ef980ee521
+  stripe_flutter: e6d9445f921a0f7c9e589ede7afcb9410977c9b5
 
 PODFILE CHECKSUM: 2c26e2bafa90f053205a9e99ab1fdce88251e293
 
-COCOAPODS: 1.7.5
+COCOAPODS: 1.9.0

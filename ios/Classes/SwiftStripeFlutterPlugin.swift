@@ -6,8 +6,9 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     
     static var flutterChannel: FlutterMethodChannel!
     static var customerContext: STPCustomerContext?
+    static var paymentContext: STPPaymentContext?
     
-    static var delegateHandler: PaymentMethodsViewControllerDelegate!
+    static var delegateHandler: PaymentOptionViewControllerDelegate!
     
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "stripe_flutter", binaryMessenger: registrar.messenger())
@@ -15,7 +16,7 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     let instance = SwiftStripeFlutterPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
     
-    self.delegateHandler = PaymentMethodsViewControllerDelegate()
+    self.delegateHandler = PaymentOptionViewControllerDelegate()
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -55,15 +56,26 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     func initCustomerSession(_ result: @escaping FlutterResult) {
         let flutterEphemeralKeyProvider = FlutterEphemeralKeyProvider(channel: SwiftStripeFlutterPlugin.flutterChannel)
         SwiftStripeFlutterPlugin.customerContext = STPCustomerContext(keyProvider: flutterEphemeralKeyProvider)
-        
+        if let context = SwiftStripeFlutterPlugin.customerContext {
+            SwiftStripeFlutterPlugin.paymentContext = STPPaymentContext(customerContext: context)
+        }
         result(nil)
     }
     
     func endCustomerSession(_ result: @escaping FlutterResult) {
-        SwiftStripeFlutterPlugin.customerContext?.clearCachedCustomer()
+        SwiftStripeFlutterPlugin.customerContext?.clearCache()
         SwiftStripeFlutterPlugin.customerContext = nil
         
         result(nil)
+    }
+    
+    func getSelectedOption(_ result: @escaping FlutterResult) {
+        if let customerContext = SwiftStripeFlutterPlugin.customerContext {
+            result(STPPaymentContext(customerContext: customerContext).selectedPaymentOption?.description)
+        } else {
+            result(nil)
+        }
+        
     }
     
     func showPaymentMethodsScreen(_ result: @escaping FlutterResult) {
@@ -81,8 +93,8 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
             SwiftStripeFlutterPlugin.delegateHandler.window = window
             SwiftStripeFlutterPlugin.delegateHandler.flutterViewController = rootVc
             SwiftStripeFlutterPlugin.delegateHandler.setFlutterResult(result)
-            
-            let vc = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(),
+
+            let vc = STPPaymentOptionsViewController(configuration: STPPaymentConfiguration.shared(),
                                                      theme: STPTheme.default(),
                                                      customerContext: _context,
                                                      delegate: SwiftStripeFlutterPlugin.delegateHandler)
@@ -105,7 +117,7 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     }
 }
 
-class FlutterEphemeralKeyProvider : NSObject, STPEphemeralKeyProvider {
+class FlutterEphemeralKeyProvider : NSObject, STPCustomerEphemeralKeyProvider {
     
     private let channel: FlutterMethodChannel
     
@@ -144,9 +156,9 @@ class FlutterEphemeralKeyProvider : NSObject, STPEphemeralKeyProvider {
     }
 }
 
-class PaymentMethodsViewControllerDelegate: NSObject,  STPPaymentMethodsViewControllerDelegate {
+class PaymentOptionViewControllerDelegate: NSObject,  STPPaymentOptionsViewControllerDelegate {
     
-    private var currentPaymentMethod: STPPaymentMethod? = nil
+    private var currentPaymentMethod: STPPaymentOption? = nil
     private var flutterResult: FlutterResult? = nil
     private var tuppleResult = [String:Any?]()
     
@@ -157,40 +169,33 @@ class PaymentMethodsViewControllerDelegate: NSObject,  STPPaymentMethodsViewCont
         self.flutterResult = result
     }
     
-    func paymentMethodsViewController(_ paymentMethodsViewController: STPPaymentMethodsViewController, didSelect paymentMethod: STPPaymentMethod) {
+    func paymentOptionsViewController(_ paymentOptionsViewController: STPPaymentOptionsViewController, didSelect paymentOption: STPPaymentOption) {
         print("didSelectPaymentMethod")
-        currentPaymentMethod = paymentMethod
-        
-        if let source = paymentMethod as? STPSource {
+        currentPaymentMethod = paymentOption
+        print(paymentOption)
+        if let source = paymentOption as? STPPaymentMethod {
             print("paymentMethod as STPSource")
-            tuppleResult["id"] = source.stripeID
-            tuppleResult["last4"] = source.cardDetails?.last4
-            tuppleResult["brand"] = STPCard.string(from: source.cardDetails?.brand ?? STPCardBrand.unknown)
-            tuppleResult["expiredYear"] = Int(source.cardDetails?.expYear ?? 0)
-            tuppleResult["expiredMonth"] = Int(source.cardDetails?.expMonth ?? 0)
-        } else if let card = paymentMethod as? STPCard {
-            print("paymentMethod as STPCard")
-            tuppleResult["id"] = card.stripeID
-            tuppleResult["last4"] = card.last4
-            tuppleResult["brand"] = STPCard.string(from: card.brand)
-            tuppleResult["expiredYear"] = Int(card.expYear)
-            tuppleResult["expiredMonth"] = Int(card.expMonth)
+            tuppleResult["id"] = source.stripeId
+            tuppleResult["last4"] = source.card?.last4
+            tuppleResult["brand"] = STPCard.string(from: source.card?.brand ?? STPCardBrand.unknown)
+            tuppleResult["expiredYear"] = Int(source.card?.expYear ?? 0)
+            tuppleResult["expiredMonth"] = Int(source.card?.expMonth ?? 0)
         }
     }
     
-    func paymentMethodsViewController(_ paymentMethodsViewController: STPPaymentMethodsViewController, didFailToLoadWithError error: Error) {
+    func paymentOptionsViewController(_ paymentOptionsViewController: STPPaymentOptionsViewController, didFailToLoadWithError error: Error) {
         closeWindow()
         cleanInstance()
     }
-
-    func paymentMethodsViewControllerDidFinish(_ paymentMethodsViewController: STPPaymentMethodsViewController) {
+    
+    func paymentOptionsViewControllerDidFinish(_ paymentOptionsViewController: STPPaymentOptionsViewController) {
         print(tuppleResult)
         self.flutterResult?(tuppleResult)
         closeWindow()
         cleanInstance()
     }
     
-    func paymentMethodsViewControllerDidCancel(_ paymentMethodsViewController: STPPaymentMethodsViewController) {
+    func paymentOptionsViewControllerDidCancel(_ paymentOptionsViewController: STPPaymentOptionsViewController) {
         closeWindow()
         cleanInstance()
     }

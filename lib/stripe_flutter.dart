@@ -33,16 +33,9 @@ class StripeFlutter {
 
   static Future<CardSourceModel> showPaymentMethodsScreen() async {
     try {
-      final start = DateTime.now().millisecondsSinceEpoch;
-      print("Starting at: " + start.toString());
       var sourceResult =
       await _channel.invokeMethod("showPaymentMethodsScreen");
-      if (sourceResult is Map) {
-        print("select payment source result");
-        print(json.encode(sourceResult));
-      }
-      final end = DateTime.now().millisecondsSinceEpoch;
-      print("Ends at: " + end.toString());
+      if (sourceResult is Map) print(json.encode(sourceResult));
       return _parseToCardSourceModel(sourceResult);
     } on PlatformException catch (e) {
       print(e);
