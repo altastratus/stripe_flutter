@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:stripe_flutter/src/card_source_model.dart';
 import 'package:stripe_flutter/src/customer_session.dart';
 import 'package:stripe_flutter/src/ephemeral_key_provider.dart';
+import 'package:stripe_flutter/src/payment_summary_item_model.dart';
 
 export 'package:stripe_flutter/src/card_source_model.dart';
 export 'package:stripe_flutter/src/ephemeral_key_provider.dart';
+export 'package:stripe_flutter/src/payment_summary_item_model.dart';
 
 class StripeFlutter {
   static const MethodChannel _channel = const MethodChannel('stripe_flutter');
@@ -21,9 +23,9 @@ class StripeFlutter {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  static initCustomerSession(EphemeralKeyProvider provider) {
+  static Future<String> initCustomerSession(EphemeralKeyProvider provider) {
     CustomerSession.initCustomerSession(provider);
-    _channel.invokeMethod("initCustomerSession");
+    return _channel.invokeMethod("initCustomerSession");
   }
 
   static endCustomerSession() {
@@ -43,7 +45,7 @@ class StripeFlutter {
     }
   }
 
-  static _parseToCardSourceModel(raw) =>
+  static CardSourceModel _parseToCardSourceModel(raw) =>
       CardSourceModel(
         raw["id"],
         raw["last4"],
@@ -54,6 +56,7 @@ class StripeFlutter {
         raw["expiredMonth"] is String
             ? int.tryParse(raw["expiredMonth"]) ?? 0
             : raw["expiredMonth"],
+          raw["type"]
       );
 
   static Future<dynamic> _methodCallHandler(MethodCall methodCall) async {
@@ -74,5 +77,25 @@ class StripeFlutter {
     } on ArgumentError catch (_) {
       return null;
     }
+  }
+
+  static Future<CardSourceModel> getSelectedPaymentMethod() async {
+    var sourceResult = await _channel.invokeMethod("getSelectedPaymentOption");
+    print("getSelectedPaymentOption $sourceResult");
+    if (sourceResult == null || sourceResult is String) throw Exception(
+        "Customer session must be initialized first");
+    return _parseToCardSourceModel(sourceResult);
+  }
+
+  static Future payUsingApplePay(List<PaymentSummaryItemModel> items) async {
+    var args = items.map((item) {
+      return {
+        "label": item.label,
+        "amount": item.amount.toString(),
+      };
+    }).toList();
+    var result = await _channel.invokeMethod("payUsingApplePay", args);
+    print("apple pay result $result");
+    return result;
   }
 }
