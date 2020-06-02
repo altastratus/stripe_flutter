@@ -6,7 +6,6 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     
     static var flutterChannel: FlutterMethodChannel!
     static var customerContext: STPCustomerContext?
-    static var paymentContext: STPPaymentContext?
     
     static var delegateHandler: PaymentOptionViewControllerDelegate!
     static var applePayContextDelegate: ApplePayContextDelegate!
@@ -17,8 +16,10 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     let instance = SwiftStripeFlutterPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
     
+    let applePayDelegate = ApplePayContextDelegate(channel: channel)
+    SwiftStripeFlutterPlugin.applePayContextDelegate = applePayDelegate
+    
     self.delegateHandler = PaymentOptionViewControllerDelegate()
-    self.applePayContextDelegate = ApplePayContextDelegate()
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -44,15 +45,15 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     case "showPaymentMethodsScreen":
         showPaymentMethodsScreen(result);
         break;
-    case "getSelectedPaymentOption":
-        getSelectedOption(result)
+    case "getCustomerDefaultSource":
+        getDefaultSource(result)
         break
     case "payUsingApplePay":
-        guard let args = call.arguments as? [[String:String]] else {
-            result(FlutterError(code: "InvalidArgumentsError", message: "Invalid arguments received", details: nil))
+        guard let items = call.arguments as? [[String:String]] else {
+            result(FlutterError(code: "InvalidArgumentsError", message: "Invalid items argument received", details: nil))
             return
         }
-        handlePaymentUsingApplePay(result, items: args)
+        handlePaymentUsingApplePay(result, items: items)
         break
     default:
         result(FlutterMethodNotImplemented)
@@ -78,39 +79,42 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
         result(nil)
     }
     
-    func getSelectedOption(_ result: @escaping FlutterResult) {
-        if let context = SwiftStripeFlutterPlugin.customerContext {
-            context.retrieveCustomer({ (customer,  error) in
-                if error != nil {
-                    result(FlutterError(code: "StripeDefaultSource", message: error?.localizedDescription, details: nil))
-                    return
-                }
-                if let source = customer?.defaultSource as? STPSource {
-                    var tuppleResult = [String:Any?]()
-                    tuppleResult["id"] = source.stripeID
-                    tuppleResult["last4"] = source.cardDetails?.last4
-                    tuppleResult["brand"] = STPCard.string(from: source.cardDetails?.brand ?? STPCardBrand.unknown)
-                    tuppleResult["expiredYear"] = Int(source.cardDetails?.expYear ?? 0)
-                    tuppleResult["expiredMonth"] = Int(source.cardDetails?.expMonth ?? 0)
-                    result(tuppleResult)
-                } else if let card = customer?.defaultSource as? STPCard {
-                    var tuppleResult = [String:Any?]()
-                    tuppleResult["id"] = card.stripeID
-                    tuppleResult["last4"] = card.last4
-                    tuppleResult["brand"] = STPCard.string(from: card.brand)
-                    tuppleResult["expiredYear"] = Int(card.expYear)
-                    tuppleResult["expiredMonth"] = Int(card.expMonth)
-                } else {
-                    if let c = customer {
-                        result(c.description)
-                        return
-                    }
-                    result(customer?.defaultSource?.description)
-                }
-            })
-        } else {
-            result("Customer session is null")
+    func getDefaultSource(_ result: @escaping FlutterResult) {
+        guard let context = SwiftStripeFlutterPlugin.customerContext else {
+            result(FlutterError(code: "IllegalStateError",
+                                message: "CustomerSession is not properly initialized, have you correctly initialize CustomerSession?",
+                                details: nil))
+            return
         }
+        context.retrieveCustomer({ (customer,  error) in
+            if error != nil {
+                result(FlutterError(code: "StripeDefaultSource", message: error?.localizedDescription, details: nil))
+                return
+            }
+            if let source = customer?.defaultSource as? STPSource {
+                var tuppleResult = [String:Any?]()
+                tuppleResult["id"] = source.stripeID
+                tuppleResult["last4"] = source.cardDetails?.last4
+                tuppleResult["brand"] = STPCard.string(from: source.cardDetails?.brand ?? STPCardBrand.unknown)
+                tuppleResult["expiredYear"] = Int(source.cardDetails?.expYear ?? 0)
+                tuppleResult["expiredMonth"] = Int(source.cardDetails?.expMonth ?? 0)
+                result(tuppleResult)
+            } else if let card = customer?.defaultSource as? STPCard {
+                var tuppleResult = [String:Any?]()
+                tuppleResult["id"] = card.stripeID
+                tuppleResult["last4"] = card.last4
+                tuppleResult["brand"] = STPCard.string(from: card.brand)
+                tuppleResult["expiredYear"] = Int(card.expYear)
+                tuppleResult["expiredMonth"] = Int(card.expMonth)
+            } else {
+                if let s = customer?.defaultSource {
+                    result(s.description)
+                    return
+                } else {
+                    result(nil)
+                }
+            }
+        })
     }
     
     func showPaymentMethodsScreen(_ result: @escaping FlutterResult) {
@@ -160,6 +164,8 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
             let rootVc = window.rootViewController {
             
             let paymentRequest = Stripe.paymentRequest(withMerchantIdentifier: merchantId, country: "AU", currency: "AUD")
+            
+            // prepare sumarry items
             paymentRequest.paymentSummaryItems = items.compactMap(){(item) -> PKPaymentSummaryItem? in
                 if  let label = item["label"],
                     let strAmount = item["amount"] {
@@ -167,6 +173,7 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
                 }
                 return nil
             }
+            
             if let applePayContext = STPApplePayContext(paymentRequest: paymentRequest, delegate: SwiftStripeFlutterPlugin.applePayContextDelegate) {
                 // Present Apple Pay payment sheet
                 SwiftStripeFlutterPlugin.applePayContextDelegate.setFlutterResult(result)
@@ -218,20 +225,61 @@ class FlutterEphemeralKeyProvider : NSObject, STPCustomerEphemeralKeyProvider {
 }
 
 class ApplePayContextDelegate: NSObject, STPApplePayContextDelegate {
+    private let channel: FlutterMethodChannel
     private var flutterResult: FlutterResult? = nil
+    private var argument: [String: String]? = nil
+    
+    init(channel: FlutterMethodChannel) {
+        self.channel = channel
+    }
     
     func setFlutterResult(_ result: @escaping FlutterResult) {
         self.flutterResult = result
     }
-
+    
     func applePayContext(_ context: STPApplePayContext, didCreatePaymentMethod paymentMethod: STPPaymentMethod, completion: @escaping STPIntentClientSecretCompletionBlock) {
-        
+
+        // Call backend to create and confirm a PaymentIntent and get its client secret
+        let args = parsePaymentMethod(paymentMethod)
+        channel.invokeMethod("doNativePaymentCheckout", arguments: args, result: { rawResult in
+            guard let result = rawResult as? [String:Any] else {
+                completion(nil, NSError(domain: "invalid_result", code: 500, userInfo: ["NSLocalizedDescriptionKey": "invalid fetchClientSecret result"]))
+                return
+            }
+            
+            if let isSuccess = result["isSuccess"] as? Bool {
+                if !isSuccess {
+                    if let message = result["errorMessage"] as? String {
+                        completion(nil, NSError(domain: "failed", code: 500, userInfo: ["NSLocalizedDescriptionKey": message]))
+                    } else {
+                        completion(nil, NSError(domain: "failed", code: 500, userInfo: ["NSLocalizedDescriptionKey": "failed when fetch client secret"]))
+                    }
+                    return
+                }
+            }
+                        
+            guard let clientSecret = result["clientSecret"] as? String else {
+                completion(nil, NSError(domain: "invalid_clientSecret", code: 500, userInfo: ["NSLocalizedDescriptionKey": "invalid clientSecret result"]))
+                return
+            }
+            
+            if let argument = result["argument"] as? [String:String] {
+                self.argument = argument
+            } else {
+                self.argument = nil
+            }
+            
+            // Call the completion block with the client secret or an error
+            completion(clientSecret, nil)
+        })
     }
     
     func applePayContext(_ context: STPApplePayContext, didCompleteWith status: STPPaymentStatus, error: Error?) {
+        var resultArgs : [String : Any?] = ["success": false]
         switch status {
             case .success:
-                self.flutterResult?(true)
+                resultArgs = ["success": true, "arg": argument]
+                self.flutterResult?(resultArgs)
                 break
             case .error:
                 // Payment failed, show the error
@@ -239,10 +287,10 @@ class ApplePayContextDelegate: NSObject, STPApplePayContextDelegate {
                 break
             case .userCancellation:
                 // User cancelled the payment
-                self.flutterResult?(false)
+                self.flutterResult?(resultArgs)
                 break
             @unknown default:
-                self.flutterResult?(false)
+                self.flutterResult?(resultArgs)
         }
     }
 }
@@ -261,16 +309,11 @@ class PaymentOptionViewControllerDelegate: NSObject,  STPPaymentOptionsViewContr
     }
     
     func paymentOptionsViewController(_ paymentOptionsViewController: STPPaymentOptionsViewController, didSelect paymentOption: STPPaymentOption) {
+        tuppleResult = [String:Any?]()
         currentPaymentMethod = paymentOption
         print(paymentOption)
         if let source = paymentOption as? STPPaymentMethod {
-            print("paymentMethod as STPSource")
-            tuppleResult["id"] = source.stripeId
-            tuppleResult["last4"] = source.card?.last4
-            tuppleResult["brand"] = STPCard.string(from: source.card?.brand ?? STPCardBrand.unknown)
-            tuppleResult["expiredYear"] = Int(source.card?.expYear ?? 0)
-            tuppleResult["expiredMonth"] = Int(source.card?.expMonth ?? 0)
-            tuppleResult["type"] = "Card"
+            tuppleResult = parsePaymentMethod(source)
         } else if let applePay = paymentOption as? STPApplePayPaymentOption {
             tuppleResult["label"] = applePay.label
             tuppleResult["type"] = "ApplePay"
@@ -315,4 +358,15 @@ class CastMismatchError : Error {
 
 class InternalStripeError : Error {
     
+}
+
+func parsePaymentMethod(_ paymentMethod: STPPaymentMethod) -> [String:Any?] {
+    var tuppleResult = [String:Any?]()
+    tuppleResult["id"] = paymentMethod.stripeId
+    tuppleResult["last4"] = paymentMethod.card?.last4
+    tuppleResult["brand"] = STPCard.string(from: paymentMethod.card?.brand ?? STPCardBrand.unknown)
+    tuppleResult["expiredYear"] = Int(paymentMethod.card?.expYear ?? 0)
+    tuppleResult["expiredMonth"] = Int(paymentMethod.card?.expMonth ?? 0)
+    tuppleResult["type"] = "Card"
+    return tuppleResult
 }
