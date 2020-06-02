@@ -33,8 +33,8 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "InvalidArgumentsError", message: "Invalid arguments received", details: nil))
             return
         }
-        
-        configurePaymentConfiguration(publishableKey: stripeKey, result)
+        let appleMerchantId = args["appleMerchantIdentifier"] as? String
+        configurePaymentConfiguration(result, publishableKey: stripeKey, appleMerchantIdentifier: appleMerchantId)
         break
     case "initCustomerSession":
         initCustomerSession(result)
@@ -60,9 +60,11 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     }
   }
     
-    func configurePaymentConfiguration(publishableKey: String, _ result: @escaping FlutterResult) {
+    func configurePaymentConfiguration(_ result: @escaping FlutterResult, publishableKey: String, appleMerchantIdentifier: String?) {
         STPAPIClient.shared().publishableKey = publishableKey
-        STPPaymentConfiguration.shared().appleMerchantIdentifier = "merchant.au.com.playeat"
+        if let appleMerchantId = appleMerchantIdentifier {
+            STPPaymentConfiguration.shared().appleMerchantIdentifier = appleMerchantId
+        }
         result(nil)
     }
     
