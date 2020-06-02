@@ -21,9 +21,11 @@ class StripeFlutter {
 
   static void Function(Map<String, String>) onSourceSelected;
 
-  static initialize(String publishableKey) {
-    _channel
-        .invokeMethod("sendPublishableKey", {"publishableKey": publishableKey});
+  static initialize(String publishableKey, {String appleMerchantIdentifier}) {
+    _channel.invokeMethod("sendPublishableKey", {
+      "publishableKey": publishableKey,
+      "appleMerchantIdentifier": appleMerchantIdentifier
+    });
 
     _channel.setMethodCallHandler(_methodCallHandler);
   }
@@ -57,18 +59,17 @@ class StripeFlutter {
     }
   }
 
-  static CardSourceModel _parseToCardSourceModel(raw) =>
-      CardSourceModel(
-          raw["id"],
-          raw["last4"],
-          raw["brand"],
-          raw["expiredYear"] is String
-              ? int.tryParse(raw["expiredYear"]) ?? 0
-              : raw["expiredYear"],
-          raw["expiredMonth"] is String
-              ? int.tryParse(raw["expiredMonth"]) ?? 0
-              : raw["expiredMonth"],
-          raw["type"]);
+  static CardSourceModel _parseToCardSourceModel(raw) => CardSourceModel(
+      raw["id"],
+      raw["last4"],
+      raw["brand"],
+      raw["expiredYear"] is String
+          ? int.tryParse(raw["expiredYear"]) ?? 0
+          : raw["expiredYear"],
+      raw["expiredMonth"] is String
+          ? int.tryParse(raw["expiredMonth"]) ?? 0
+          : raw["expiredMonth"],
+      raw["type"]);
 
   static Future<dynamic> _methodCallHandler(MethodCall methodCall) async {
     switch (methodCall.method) {
@@ -102,8 +103,8 @@ class StripeFlutter {
 
   static Future<CardSourceModel> getDefaultSource() async {
     try {
-      var sourceResult = await _channel.invokeMethod(
-          "getCustomerDefaultSource");
+      var sourceResult =
+      await _channel.invokeMethod("getCustomerDefaultSource");
       if (sourceResult is String || sourceResult == null) return null;
       var source = _parseToCardSourceModel(sourceResult);
       return source;
