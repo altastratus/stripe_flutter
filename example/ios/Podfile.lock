@@ -1,9 +1,9 @@
 PODS:
   - Flutter (1.0.0)
-  - Stripe (17.0.3)
+  - Stripe (19.1.0)
   - stripe_flutter (0.0.1):
     - Flutter
-    - Stripe (= 17.0.3)
+    - Stripe (= 19.1.0)
 
 DEPENDENCIES:
   - Flutter (from `.symlinks/flutter/ios`)
@@ -21,9 +21,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  Stripe: 30ba9a2ac7297e93de561fed695222ef980ee521
-  stripe_flutter: e6d9445f921a0f7c9e589ede7afcb9410977c9b5
+  Stripe: 82a3aab0b1a66866eef581139a00adadcb2e6dc4
+  stripe_flutter: 05a1b707f68bd689873ae614f980dfa07abcdf87
 
-PODFILE CHECKSUM: 2c26e2bafa90f053205a9e99ab1fdce88251e293
+PODFILE CHECKSUM: 097b64e1c00903a097fa4231dd174c10dfb3b629
 
-COCOAPODS: 1.9.0
+COCOAPODS: 1.9.1
