@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:stripe_flutter/src/card_source_model.dart';
@@ -8,6 +9,7 @@ import 'package:stripe_flutter/src/native_payment.dart';
 import 'package:stripe_flutter/src/native_payment_context.dart';
 import 'package:stripe_flutter/src/native_payment_result.dart';
 import 'package:stripe_flutter/src/payment_summary_item_model.dart';
+import 'package:stripe_flutter/src/wallet_environment.dart';
 
 export 'package:stripe_flutter/src/card_source_model.dart';
 export 'package:stripe_flutter/src/ephemeral_key_provider.dart';
@@ -15,11 +17,29 @@ export 'package:stripe_flutter/src/native_checkout_result.dart';
 export 'package:stripe_flutter/src/native_payment_context.dart';
 export 'package:stripe_flutter/src/native_payment_result.dart';
 export 'package:stripe_flutter/src/payment_summary_item_model.dart';
+export 'package:stripe_flutter/src/wallet_environment.dart';
 
 class StripeFlutter {
   static const MethodChannel _channel = const MethodChannel('stripe_flutter');
 
   static void Function(Map<String, String>) onSourceSelected;
+
+  static bool _isGooglePaySupported;
+
+  static bool get isGooglePaySupported {
+    assert(_isGooglePaySupported != null,
+        "Please call initGooglePay first, to initialize google pay");
+    return _isGooglePaySupported;
+  }
+
+  static Future<bool> get isNativePaymentSupported async {
+    if (Platform.isIOS)
+      return isApplePaySupported;
+    else if (Platform.isAndroid)
+      return _isGooglePaySupported;
+    else
+      return false;
+  }
 
   static initialize(String publishableKey, {String appleMerchantIdentifier}) {
     _channel.invokeMethod("sendPublishableKey", {
@@ -104,13 +124,17 @@ class StripeFlutter {
   static Future<CardSourceModel> getDefaultSource() async {
     try {
       var sourceResult =
-      await _channel.invokeMethod("getCustomerDefaultSource");
-      if (sourceResult is String || sourceResult == null) return null;
+          await _channel.invokeMethod("getCustomerDefaultSource");
+      if (sourceResult is String || sourceResult == null) return sourceResult;
       var source = _parseToCardSourceModel(sourceResult);
       return source;
     } catch (e) {
       return null;
     }
+  }
+
+  static Future<bool> get isApplePaySupported async {
+    return _channel.invokeMethod("isApplePaySupported");
   }
 
   /// [items] will show on apple pay payment modal, last item will show with
@@ -133,7 +157,7 @@ class StripeFlutter {
     NativePayment.setNativePaymentContext(nativePaymentContext);
     var result = await _channel.invokeMethod("payUsingApplePay", mappedItems);
     var argument =
-    result["arg"] != null ? Map<String, dynamic>.from(result["arg"]) : null;
+        result["arg"] != null ? Map<String, dynamic>.from(result["arg"]) : null;
     return NativePaymentResult(result["success"], argument: argument);
   }
 
@@ -142,7 +166,7 @@ class StripeFlutter {
     try {
       final nativePayment = NativePayment.getInstance();
       var result =
-      await nativePayment.nativePaymentContext.doNativeCheckout(source);
+          await nativePayment.nativePaymentContext.doNativeCheckout(source);
       return {
         "isSuccess": result.isSuccess,
         "clientSecret": result.secretClient,
@@ -152,5 +176,41 @@ class StripeFlutter {
     } on ArgumentError catch (_) {
       return null;
     }
+  }
+
+  static String _walletEnvironmentValue(WalletEnvironment walletEnvironment) {
+    switch (walletEnvironment) {
+      case WalletEnvironment.production:
+        return "production";
+      case WalletEnvironment.test:
+      default:
+        return "test";
+    }
+  }
+
+  /// this function will initialize and return that google pay is supported on this device or not
+  static Future<bool> initGooglePay(WalletEnvironment environment) async {
+    assert(environment != null);
+    _isGooglePaySupported = await _channel.invokeMethod(
+        "initGooglePay", {"environment": _walletEnvironmentValue(environment)});
+    return _isGooglePaySupported;
+  }
+
+  static Future<NativePaymentResult> payUsingGooglePay(
+    String merchantName,
+    double totalPrice,
+    NativePaymentContext nativePaymentContext,
+  ) async {
+    assert(totalPrice != null);
+    assert(totalPrice > 0);
+
+    NativePayment.setNativePaymentContext(nativePaymentContext);
+    var result = await _channel.invokeMethod("payUsingGooglePay", {
+      "merchant_name": "$merchantName",
+      "total_price": totalPrice.toStringAsFixed(2),
+    });
+    var argument =
+        result["arg"] != null ? Map<String, dynamic>.from(result["arg"]) : null;
+    return NativePaymentResult(result["success"], argument: argument);
   }
 }

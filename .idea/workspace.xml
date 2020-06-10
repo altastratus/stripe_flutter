@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9b20fcd8-8ffc-4074-a51a-a53ccd30e4ed" name="Default Changelist" comment="add initial support for apple pay">
-      <change afterPath="$PROJECT_DIR$/android/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/.idea/gradle.xml" afterDir="false" />
+    <list default="true" id="9b20fcd8-8ffc-4074-a51a-a53ccd30e4ed" name="Default Changelist" comment="add version">
+      <change afterPath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/GooglePayHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/Utils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/src/wallet_environment.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/StripeFlutterPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/StripeFlutterPlugin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/example/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/example/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/Classes/SwiftStripeFlutterPlugin.swift" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Classes/SwiftStripeFlutterPlugin.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/stripe_flutter.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/stripe_flutter.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stripe_flutter.iml" beforeDir="false" afterPath="$PROJECT_DIR$/stripe_flutter.iml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,7 +23,7 @@
   <component name="DefaultGradleProjectSettings">
     <option name="isMigrated" value="true" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="Galaxy_Nexus_API_28" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="My_Custom_Device_API_28" />
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -126,7 +134,21 @@
       <option name="project" value="LOCAL" />
       <updated>1591076379956</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="add version">
+      <created>1591077072447</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1591077072447</updated>
+    </task>
+    <task id="LOCAL-00007" summary="fix can't customize apple merchant identifier">
+      <created>1591097306747</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1591097306747</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -165,7 +187,9 @@
     <MESSAGE value="Update stripe ios and android SDK version to newer" />
     <MESSAGE value="add initial support for apple pay" />
     <MESSAGE value="serve checkout function, and then process the apple pay payment" />
-    <option name="LAST_COMMIT_MESSAGE" value="serve checkout function, and then process the apple pay payment" />
+    <MESSAGE value="add version" />
+    <MESSAGE value="fix can't customize apple merchant identifier" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix can't customize apple merchant identifier" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
