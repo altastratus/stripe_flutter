@@ -10,6 +10,9 @@
             android:name="io.flutter.app.FlutterApplication"
             android:icon="@mipmap/ic_launcher"
             android:label="stripe_flutter_example">
+        <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
         <activity
                 android:name=".MainActivity"
                 android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"

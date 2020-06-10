@@ -48,6 +48,9 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     case "getCustomerDefaultSource":
         getDefaultSource(result)
         break
+    case "isApplePaySupported":
+        isApplePaySupported(result)
+        break
     case "payUsingApplePay":
         guard let items = call.arguments as? [[String:String]] else {
             result(FlutterError(code: "InvalidArgumentsError", message: "Invalid items argument received", details: nil))
@@ -155,6 +158,10 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
             
             return
         }
+    }
+    
+    func isApplePaySupported(_ result: @escaping FlutterResult) {
+        result(Stripe.deviceSupportsApplePay())
     }
     
     func handlePaymentUsingApplePay(_ result: @escaping FlutterResult, items: [[String:String]]) {
