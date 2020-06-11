@@ -1,8 +1,4 @@
-enum PaymentType {
-  card,
-  applePay,
-  googlePay
-}
+enum PaymentType { card, applePay, googlePay }
 
 PaymentType getPaymentType(String type) {
   switch (type) {
@@ -12,6 +8,17 @@ PaymentType getPaymentType(String type) {
       return PaymentType.googlePay;
     default:
       return PaymentType.card;
+  }
+}
+
+String getPaymentTypeCode(PaymentType type) {
+  switch (type) {
+    case PaymentType.applePay:
+      return "ApplePay";
+    case PaymentType.googlePay:
+      return "GooglePay";
+    default:
+      return "Card";
   }
 }
 

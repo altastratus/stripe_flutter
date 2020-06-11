@@ -121,6 +121,24 @@ class StripeFlutter {
     }
   }
 
+  static Future<List<CardSourceModel>> getCustomerPaymentMethods() async {
+    try {
+      final rawSources =
+          await _channel.invokeMethod("getCustomerPaymentMethods");
+      if (rawSources is List) {
+        return rawSources
+            .map((source) => _parseToCardSourceModel(source))
+            .toList();
+      } else {
+        print("Invalid result from native");
+        return null;
+      }
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
   static Future<CardSourceModel> getDefaultSource() async {
     try {
       var sourceResult =
@@ -129,6 +147,7 @@ class StripeFlutter {
       var source = _parseToCardSourceModel(sourceResult);
       return source;
     } catch (e) {
+      print(e);
       return null;
     }
   }
