@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,9 @@ public class StripeFlutterPlugin implements MethodCallHandler {
             case "getCustomerDefaultSource":
                 getCustomerDefaultSource(result);
                 break;
+            case "getCustomerPaymentMethods":
+                getCustomerPaymentMethods(result);
+                break;
             case "showPaymentMethodsScreen":
                 showPaymentMethodsScreen(result);
                 break;
@@ -210,6 +214,30 @@ public class StripeFlutterPlugin implements MethodCallHandler {
                 result.error("RETRIEVE_CUSTOMER_FAILED", errorCode + " - " + errorMessage, null);
             }
         });
+    }
+
+    private void getCustomerPaymentMethods(final Result result) {
+        try {
+            CustomerSession.getInstance().getPaymentMethods(PaymentMethod.Type.Card, new CustomerSession.PaymentMethodsRetrievalListener() {
+                @Override
+                public void onPaymentMethodsRetrieved(@NotNull List<PaymentMethod> list) {
+                    List<Map<String, Object>> mapList = new ArrayList<>();
+                    for (int i=0; i < list.size(); i++) {
+                        mapList.add(Utils.toCardSourceMap(list.get(i)));
+                    }
+                    result.success(mapList);
+                }
+
+                @Override
+                public void onError(int errorCode, @NotNull String message, @org.jetbrains.annotations.Nullable StripeError stripeError) {
+                    result.error("RETRIEVE_PAYMENT_METHODS_FAILED", errorCode + " - " + message, null );
+                }
+            });
+        } catch (IllegalStateException unused) {
+            result.error("IllegalStateError", "CustomerSession is not properly initialized, have you correctly initialize CustomerSession?", null);
+        } catch (Exception exception) {
+            result.error("UNKNOWN_ERROR", exception.getLocalizedMessage(), null);
+        }
     }
 
     private void showPaymentMethodsScreen(final Result result) {

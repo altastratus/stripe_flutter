@@ -2,17 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9b20fcd8-8ffc-4074-a51a-a53ccd30e4ed" name="Default Changelist" comment="add version">
-      <change afterPath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/GooglePayHelper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/Utils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/src/wallet_environment.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/StripeFlutterPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/ventures/clade/stripe_flutter/StripeFlutterPlugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/example/android/app/src/main/AndroidManifest.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ios/Classes/SwiftStripeFlutterPlugin.swift" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Classes/SwiftStripeFlutterPlugin.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/card_source_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/card_source_model.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/stripe_flutter.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/stripe_flutter.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stripe_flutter.iml" beforeDir="false" afterPath="$PROJECT_DIR$/stripe_flutter.iml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -81,6 +75,7 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Flutter Test.tests in widget_test.dart" />
         <item itemvalue="Flutter Test.tests in widget_test.dart" />
         <item itemvalue="Flutter Test.tests in widget_test.dart" />
         <item itemvalue="Flutter Test.tests in widget_test.dart" />

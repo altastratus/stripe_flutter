@@ -48,6 +48,9 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
     case "getCustomerDefaultSource":
         getDefaultSource(result)
         break
+    case "getCustomerPaymentMethods":
+        getCustomerPaymentMethods(result);
+        break;
     case "isApplePaySupported":
         isApplePaySupported(result)
         break
@@ -82,6 +85,29 @@ public class SwiftStripeFlutterPlugin: NSObject, FlutterPlugin {
         SwiftStripeFlutterPlugin.customerContext = nil
         
         result(nil)
+    }
+    
+    func getCustomerPaymentMethods(_ result: @escaping FlutterResult) {
+        guard let context = SwiftStripeFlutterPlugin.customerContext else {
+            result(FlutterError(code: "IllegalStateError",
+                                message: "CustomerSession is not properly initialized, have you correctly initialize CustomerSession?",
+                                details: nil))
+            return
+        }
+        
+        context.listPaymentMethodsForCustomer { (paymentMethods, error) in
+            if let err = error {
+                result(FlutterError(code: "FailedRetrievePayementMethods", message: err.localizedDescription, details: nil))
+                return
+            }
+            if let list = paymentMethods {
+                result(list.map({ (method) in
+                    return parsePaymentMethod(method)
+                }))
+            } else {
+                result([])
+            }
+        }
     }
     
     func getDefaultSource(_ result: @escaping FlutterResult) {
