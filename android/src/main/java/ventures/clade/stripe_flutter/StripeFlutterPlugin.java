@@ -73,8 +73,12 @@ public class StripeFlutterPlugin implements MethodCallHandler {
         registrar.addActivityResultListener(new PluginRegistry.ActivityResultListener() {
             @Override
             public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-                if (requestCode == PaymentMethodsActivityStarter.REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-                    handleStripeResult(data);
+                if (requestCode == PaymentMethodsActivityStarter.REQUEST_CODE) {
+                    if (resultCode == Activity.RESULT_OK) {
+                        handleStripeResult(data);
+                    } else {
+                        flutterResult.success(null);
+                    }
                 } else if (requestCode == LOAD_PAYMENT_DATA_REQUEST_CODE) {
                     handelGooglePayResult(resultCode, data);
                 }
@@ -86,7 +90,7 @@ public class StripeFlutterPlugin implements MethodCallHandler {
     private static void handleStripeResult(Intent data) {
         PaymentMethodsActivityStarter.Result result = PaymentMethodsActivityStarter.Result.fromIntent(data);
         if (result == null) {
-            flutterResult.error("RuntimeError", "Unknown result from stripe activity", null);
+            flutterResult.success(null);
             return;
         }
         @Nullable PaymentMethod paymentMethod = result.component1();
