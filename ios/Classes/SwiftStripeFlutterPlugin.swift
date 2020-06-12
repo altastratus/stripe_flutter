@@ -356,6 +356,7 @@ class PaymentOptionViewControllerDelegate: NSObject,  STPPaymentOptionsViewContr
     }
     
     func paymentOptionsViewController(_ paymentOptionsViewController: STPPaymentOptionsViewController, didFailToLoadWithError error: Error) {
+        self.flutterResult?(FlutterError(code: "PaymentOptionsError", message: error.localizedDescription, details: nil))
         closeWindow()
         cleanInstance()
     }
@@ -368,6 +369,7 @@ class PaymentOptionViewControllerDelegate: NSObject,  STPPaymentOptionsViewContr
     }
     
     func paymentOptionsViewControllerDidCancel(_ paymentOptionsViewController: STPPaymentOptionsViewController) {
+        self.flutterResult?(nil)
         closeWindow()
         cleanInstance()
     }

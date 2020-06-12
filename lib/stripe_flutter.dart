@@ -64,6 +64,7 @@ class StripeFlutter {
     try {
       var sourceResult =
           await _channel.invokeMethod("showPaymentMethodsScreen");
+      if (sourceResult == null) return null;
       return _parseToCardSourceModel(sourceResult);
     } on PlatformException catch (_) {
       return null;
