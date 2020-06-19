@@ -158,6 +158,11 @@ public class StripeFlutterPlugin implements MethodCallHandler {
             case "payUsingGooglePay":
                 if (call.arguments instanceof Map) {
                     final Map params = (Map) args;
+                    Object merchantId = params.get("merchant_id");
+                    if (!(merchantId instanceof String)) {
+                        result.error("INVALID_ARG", "Invalid merchantId argument", null);
+                        return;
+                    }
                     Object merchantName = params.get("merchant_name");
                     if (!(merchantName instanceof String)) {
                         result.error("INVALID_ARG", "Invalid merchantName argument", null);
@@ -168,7 +173,7 @@ public class StripeFlutterPlugin implements MethodCallHandler {
                         result.error("INVALID_ARG", "Invalid totalPrice argument", null);
                         return;
                     }
-                    payUsingGooglePay(merchantName.toString(), totalPrice.toString());
+                    payUsingGooglePay(merchantName.toString(), merchantId.toString(), totalPrice.toString());
                 } else {
                     result.error("INVALID_ARG", "Invalid environment parameter", null);
                 }
@@ -303,10 +308,10 @@ public class StripeFlutterPlugin implements MethodCallHandler {
         }
     }
 
-    private void payUsingGooglePay(String merchantName, String totalPrice) {
+    private void payUsingGooglePay(String merchantName, String merchantId, String totalPrice) {
         PaymentDataRequest request;
         try {
-            request = GooglePayHelper.createPaymentDataRequest(registrar.activity(), merchantName, totalPrice);
+            request = GooglePayHelper.createPaymentDataRequest(registrar.activity(), merchantName, merchantId, totalPrice);
             AutoResolveHelper.resolveTask(
                     paymentsClient.loadPaymentData(request),
                     registrar.activity(),
