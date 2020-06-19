@@ -217,20 +217,23 @@ class StripeFlutter {
   }
 
   static Future<NativePaymentResult> payUsingGooglePay(
+    String merchantId,
     String merchantName,
     double totalPrice,
     NativePaymentContext nativePaymentContext,
   ) async {
+    assert(merchantId != null);
     assert(totalPrice != null);
     assert(totalPrice > 0);
 
     NativePayment.setNativePaymentContext(nativePaymentContext);
     var result = await _channel.invokeMethod("payUsingGooglePay", {
       "merchant_name": "$merchantName",
+      "merchant_id": merchantId,
       "total_price": totalPrice.toStringAsFixed(2),
     });
     var argument =
-        result["arg"] != null ? Map<String, dynamic>.from(result["arg"]) : null;
+    result["arg"] != null ? Map<String, dynamic>.from(result["arg"]) : null;
     return NativePaymentResult(result["success"], argument: argument);
   }
 }

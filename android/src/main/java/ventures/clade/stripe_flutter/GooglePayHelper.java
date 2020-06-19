@@ -36,7 +36,7 @@ class GooglePayHelper {
 
 
     @NonNull
-    static PaymentDataRequest createPaymentDataRequest(Context context, String merchantName, String totalPrice) throws JSONException {
+    static PaymentDataRequest createPaymentDataRequest(Context context, String merchantName, String merchantId, String totalPrice) throws JSONException {
         final JSONObject tokenizationSpec;
         tokenizationSpec = new GooglePayConfig(
                 PaymentConfiguration.getInstance(context).getPublishableKey()
@@ -85,7 +85,10 @@ class GooglePayHelper {
                         .put("totalPriceStatus", "FINAL")
                         .put("currencyCode", "AUD")
                 )
-                .put("merchantInfo", new JSONObject().put("merchantName", merchantName))
+                .put("merchantInfo", new JSONObject()
+                        .put("merchantName", merchantName)
+                        .put("merchantId", merchantId)
+                )
 
                 // require email address
                 .put("emailRequired", true)
