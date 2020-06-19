@@ -158,8 +158,11 @@ public class StripeFlutterPlugin implements MethodCallHandler {
             case "payUsingGooglePay":
                 if (call.arguments instanceof Map) {
                     final Map params = (Map) args;
-                    Object merchantIdRaw = params.get("merchant_id");
-                    String merchantId = merchantIdRaw != null ? merchantIdRaw.toString() : null;
+                    Object merchantId = params.get("merchant_id");
+                    if (!(merchantId instanceof String)) {
+                        result.error("INVALID_ARG", "Invalid merchantId argument", null);
+                        return;
+                    }
                     Object merchantName = params.get("merchant_name");
                     if (!(merchantName instanceof String)) {
                         result.error("INVALID_ARG", "Invalid merchantName argument", null);
@@ -170,7 +173,7 @@ public class StripeFlutterPlugin implements MethodCallHandler {
                         result.error("INVALID_ARG", "Invalid totalPrice argument", null);
                         return;
                     }
-                    payUsingGooglePay(merchantName.toString(), merchantId, totalPrice.toString());
+                    payUsingGooglePay(merchantName.toString(), merchantId.toString(), totalPrice.toString());
                 } else {
                     result.error("INVALID_ARG", "Invalid environment parameter", null);
                 }
